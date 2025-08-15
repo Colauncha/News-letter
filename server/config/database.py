@@ -25,6 +25,7 @@ async def create_client():
         raise Exception(f"Failed to connect to MongoDB: {e}")
 
 def get_db () -> AsyncIOMotorDatabase:
+    global client
     print(f'DBClient: {client}')
     print(f'config: {app_config}')
     if client is None:
