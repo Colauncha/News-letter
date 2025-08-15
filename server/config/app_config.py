@@ -6,7 +6,6 @@ class DatabaseConfig(BaseSettings):
     NAME: str =""
 
     model_config = {
-        "env_prefix": "DATABASE_",
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "extra": "ignore"
