@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from .config.app_config import app_config
 from .config.database import create_client, close_mongo_connection
@@ -27,6 +28,14 @@ def create_app():
         openapi_url="/openapi.json",
         description="API for News Letter and Tracking App",
         lifespan=lifespan
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=app_config.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.get("/", include_in_schema=False)

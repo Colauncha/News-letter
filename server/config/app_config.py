@@ -14,11 +14,19 @@ class DatabaseConfig(BaseSettings):
 
 class AppConfig(BaseSettings):
     app_name: str = "News Letter and Tracking App"
-    debug: bool = False
     version: str = "1.0.0"
     ENV: str = "development"
+    debug: bool = False if ENV == "development" else True
     DB: DatabaseConfig
     JWT_SECRET_KEY: str
+    CORS_ORIGINS: list[str] = [
+            "http://localhost:5173", "http://localhost:5174",
+            "https://biddius.com", "https://www.biddius.com",
+            "https://frontend-fixserv.vercel.app",
+        ] if ENV == "development" else [
+            "https://biddius.com", "https://www.biddius.com",
+            "https://frontend-fixserv.vercel.app"
+        ]
 
     model_config = {
         "env_file": ".env",
