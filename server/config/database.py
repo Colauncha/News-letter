@@ -1,5 +1,4 @@
 import asyncio
-from functools import lru_cache
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import server_api
@@ -26,10 +25,9 @@ async def create_client():
 
 def get_db () -> AsyncIOMotorDatabase:
     global client
-    print(f'DBClient: {client}')
-    print(f'config: {app_config}')
     if client is None:
-        client = AsyncIOMotorClient(app_config.DB.URL)
+        # client = AsyncIOMotorClient(app_config.DB.URL)
+        asyncio.run(create_client())
     return client[app_config.DB.NAME]
 
 async def close_mongo_connection():

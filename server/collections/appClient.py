@@ -2,9 +2,10 @@ import jwt
 import secrets
 import hashlib
 
-from uuid import uuid4
+from bson import ObjectId
+from bson.errors import InvalidId
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from fastapi import HTTPException
 
 from ..config.database import get_db, app_config
@@ -39,7 +40,6 @@ class AppClient:
         limit: int = 50,
         skip: int = 0
     ) -> PaginatedResponse[AppClientRead]:
-        print('beforeDB')
         filters = filters or {}
 
         total = await self.collection.count_documents(filters)
@@ -47,8 +47,6 @@ class AppClient:
         cursor = self.collection.find(filters).skip(skip).limit(limit)
         docs = await cursor.to_list(length=limit)
         items = [AppClientRead(**doc) for doc in docs if doc]
-        print(f"Listing app clients with filters: {filters}, skip: {skip}, limit: {limit}, total: {total}")
-        print(items)
         return PaginatedResponse[AppClientRead](
             total=total,
             skip=skip,
@@ -60,20 +58,45 @@ class AppClient:
     async def exists(self, attr: dict[str, Any]) -> bool:
         return await self.collection.find_one(attr) is not None
 
-    async def update(self, app_client_id: str, updates: AppClientUpdate) -> bool:
+    async def update(self, app_client_id: str, updates: AppClientUpdate) -> dict:
+        """Update an app client and return result details."""
         if not app_client_id:
-            return False
-        result = await self.collection.update_one(
-            {"_id": app_client_id},
-            {"$set": updates.model_dump(exclude_unset=True)}
-        )
-        return result.modified_count > 0
+            return {"success": False, "reason": "Missing ID"}
 
-    async def delete(self, app_client_id: str) -> bool:
+        try:
+            oid = ObjectId(app_client_id)
+        except InvalidId:
+            return {"success": False, "reason": "Invalid ID format"}
+
+        # Prepare update data
+        update_data = updates.model_dump(exclude_unset=True)
+        if "updated_at" not in update_data:
+            update_data["updated_at"] = datetime.now(timezone.utc)
+
+        # Perform the update
+        result = await self.collection.update_one({"_id": oid}, {"$set": update_data})
+
+        if result.matched_count == 0:
+            return {"success": False, "reason": "No document found"}
+        elif result.modified_count == 0:
+            return {"success": True, "reason": "No changes made"}
+        else:
+            return {"success": True, "reason": "Updated successfully"}
+
+    async def delete(self, app_client_id: str) -> dict:
         if not app_client_id:
-            return False
-        result = await self.collection.delete_one({"_id": app_client_id})
-        return result.deleted_count > 0
+            return {"success": False, "reason": "Missing ID"}
+
+        try:
+            oid = ObjectId(app_client_id)
+        except InvalidId:
+            return {"success": False, "reason": "Invalid ID format"}
+
+        result = await self.collection.delete_one({"_id": oid})
+
+        if result.deleted_count == 0:
+            return {"success": False, "reason": "No document found"}
+        return {"success": True, "reason": "Delete successfully"}
 
     async def create(self, document: AppClientCreate) -> dict[str, str | int | datetime]:
         """Improved create method using master secret approach"""
@@ -97,7 +120,6 @@ class AppClient:
             "token_expires_days": 365
         })
         
-        print(f"Creating client: {doc_dict['name']} with API_KEY: {api_key}")
         result = await self.collection.insert_one(doc_dict)
         
         # Create JWT secret by combining master secret with client salt

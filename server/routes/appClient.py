@@ -45,11 +45,10 @@ async def list_app_clients(
     limit: int = 50,
     app_client_model: AppClient = Depends(get_app_client_model)
 ):
-    print("Listing app clients with skip:", skip, "and limit:", limit)
     return await app_client_model.list(skip=skip, limit=limit)
 
 
-@router.put("/{app_client_id}", response_model=bool)
+@router.put("/{app_client_id}", response_model=dict)
 async def update_app_client(
     app_client_id: str,
     payload: AppClientUpdate,
@@ -58,11 +57,13 @@ async def update_app_client(
 ):
     if app_client["client_data"]["id"] != app_client_id:
         raise HTTPException(status_code=403, detail="You can only update your own App Client")
-    payload.updated_at = payload.updated_at or datetime.now(timezone.utc)
-    updated = await app_client_model.update(app_client_id, payload)
-    if not updated:
-        raise HTTPException(status_code=404, detail="App Client not found or no changes made")
-    return updated
+
+    result = await app_client_model.update(app_client_id, payload)
+
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["reason"])
+
+    return result
 
 
 @router.delete("/{app_client_id}", response_model=bool)
@@ -73,10 +74,13 @@ async def delete_app_client(
 ):
     if app_client["client_data"]["id"] != app_client_id:
         raise HTTPException(status_code=403, detail="You can only delete your own App Client")
-    deleted = await app_client_model.delete(app_client_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="App Client not found")
-    return deleted
+
+    result = await app_client_model.delete(app_client_id)
+
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result["reason"])
+
+    return result
 
 
 @router.post("/refresh-token")
