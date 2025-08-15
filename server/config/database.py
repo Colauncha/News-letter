@@ -8,7 +8,6 @@ from server.config.app_config import app_config
 
 client: AsyncIOMotorClient = None
     
-@lru_cache
 async def create_client():
     global client
     try:
@@ -21,12 +20,15 @@ async def create_client():
             ),
             connect=True,
         )
+        return client
     except Exception as e:
         raise Exception(f"Failed to connect to MongoDB: {e}")
 
 def get_db () -> AsyncIOMotorDatabase:
     print(f'DBClient: {client}')
     print(f'config: {app_config}')
+    if client is None:
+        client = AsyncIOMotorClient(app_config.DB.URL)
     return client[app_config.DB.NAME]
 
 async def close_mongo_connection():

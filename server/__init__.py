@@ -3,7 +3,7 @@ import traceback
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config.app_config import app_config
@@ -38,8 +38,6 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    from fastapi.responses import JSONResponse
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request, exc):
