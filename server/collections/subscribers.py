@@ -1,5 +1,7 @@
+import csv
+from io import StringIO
 from bson import ObjectId
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import uuid4
 from fastapi import HTTPException, status
 
@@ -89,3 +91,44 @@ class Subscriber:
             return False
         result = await self.collection.delete_one({"_id": ObjectId(subscriber_id)})
         return result.deleted_count > 0
+
+    def _create_csv_content(self, items: List[SubscriberRead]) -> str:
+        """
+        Convert database items to CSV string content
+        
+        Args:
+            items: List of database records
+            
+        Returns:
+            str: CSV content as string
+        """
+        # Create StringIO object to write CSV in memory
+        output = StringIO()
+        
+        # Define CSV headers
+        headers = ['id', 'email', 'updates', 'marketing', 'announcements', 'newsletters', 'seasonal']
+        
+        writer = csv.DictWriter(output, fieldnames=headers)
+        writer.writeheader()
+        
+        # Process each SubscriberRead item
+        for item in items:
+            campaigns = item.campaigns  # Direct access since it's a Pydantic model
+            
+            row = {
+                'id': str(item.id),  # Using the model's id field
+                'email': item.email,
+                'updates': campaigns.updates if campaigns else False,
+                'marketing': campaigns.marketing if campaigns else False,
+                'announcements': campaigns.announcements if campaigns else False,
+                'newsletters': campaigns.newsletters if campaigns else False,
+                'seasonal': campaigns.seasonal if campaigns else False
+            }
+            
+            writer.writerow(row)
+        
+        # Get CSV content and reset pointer
+        csv_content = output.getvalue()
+        output.close()
+        
+        return csv_content

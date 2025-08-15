@@ -5,9 +5,6 @@ from fastapi import Depends, HTTPException, Header, status
 from server.collections.subscribers import Subscriber
 
 
-# async def get_app_client_model() -> AppClient:
-#     return AppClient()
-
 def get_app_client_model():
     try:
         from server.collections.appClient import AppClient
