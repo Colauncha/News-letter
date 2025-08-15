@@ -39,6 +39,7 @@ class AppClient:
         limit: int = 50,
         skip: int = 0
     ) -> PaginatedResponse[AppClientRead]:
+        print('beforeDB')
         filters = filters or {}
 
         total = await self.collection.count_documents(filters)
@@ -46,6 +47,8 @@ class AppClient:
         cursor = self.collection.find(filters).skip(skip).limit(limit)
         docs = await cursor.to_list(length=limit)
         items = [AppClientRead(**doc) for doc in docs if doc]
+        print(f"Listing app clients with filters: {filters}, skip: {skip}, limit: {limit}, total: {total}")
+        print(items)
         return PaginatedResponse[AppClientRead](
             total=total,
             skip=skip,

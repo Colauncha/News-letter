@@ -45,6 +45,7 @@ async def list_app_clients(
     limit: int = 50,
     app_client_model: AppClient = Depends(get_app_client_model)
 ):
+    print("Listing app clients with skip:", skip, "and limit:", limit)
     return await app_client_model.list(skip=skip, limit=limit)
 
 
