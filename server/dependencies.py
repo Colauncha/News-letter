@@ -1,12 +1,22 @@
+import traceback
 from typing import Optional
 from fastapi import Depends, HTTPException, Header, status
 
-from server.collections.appClient import AppClient
 from server.collections.subscribers import Subscriber
 
 
-async def get_app_client_model() -> AppClient:
-    return AppClient()
+# async def get_app_client_model() -> AppClient:
+#     return AppClient()
+
+def get_app_client_model():
+    try:
+        from server.collections.appClient import AppClient
+        return AppClient()
+    except Exception as e:
+        print("ERROR in get_app_client_model:", e)
+        traceback.print_exc()
+        raise
+
 
 async def verify_bearer_token(
     authorization: Optional[str] = Header(None, description="Bearer token"),

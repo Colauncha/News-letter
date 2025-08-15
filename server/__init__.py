@@ -1,4 +1,5 @@
 import json
+import traceback
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
@@ -37,6 +38,15 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    from fastapi.responses import JSONResponse
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request, exc):
+        print("Unhandled error:", exc)
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+
 
     @app.get("/", include_in_schema=False)
     async def root():
