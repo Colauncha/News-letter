@@ -16,9 +16,9 @@ async def create_subscriber(
     payload: SubscriberCreate,
     subscriber_model: Subscriber = Depends(get_subscriber_model)
 ):
-    if await subscriber_model.exists({"email": payload.email}):
+    if subscriber_model.exists({"email": payload.email}):
         raise HTTPException(status_code=400, detail="Subscriber already exists")
-    new = await subscriber_model.create(payload)
+    new = subscriber_model.create(payload)
     return {
         "message": "Subscribed successfully",
         "data": new
@@ -30,7 +30,7 @@ async def get_subscriber(
     subscriber_id: str,
     subscriber_model: Subscriber = Depends(get_subscriber_model)
 ):
-    subscriber = await subscriber_model.get_by_id(subscriber_id)
+    subscriber = subscriber_model.get_by_id(subscriber_id)
     if not subscriber:
         raise HTTPException(status_code=404, detail="Subscriber not found")
     return subscriber
@@ -42,7 +42,7 @@ async def list_subscribers(
     limit: int = 50,
     subscriber_model: Subscriber = Depends(get_subscriber_model)
 ):
-    return await subscriber_model.list(skip=skip, limit=limit)
+    return subscriber_model.list(skip=skip, limit=limit)
 
 
 @router.put("/{subscriber_id}", response_model=bool)
@@ -52,7 +52,7 @@ async def update_subscriber(
     subscriber_model: Subscriber = Depends(get_subscriber_model)
 ):
     payload.updated_at = payload.updated_at or datetime.now(timezone.utc)
-    updated = await subscriber_model.update(subscriber_id, payload)
+    updated = subscriber_model.update(subscriber_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Subscriber not found or no changes made")
     return updated
@@ -63,7 +63,7 @@ async def delete_subscriber(
     subscriber_id: str,
     subscriber_model: Subscriber = Depends(get_subscriber_model)
 ):
-    deleted = await subscriber_model.delete(subscriber_id)
+    deleted = subscriber_model.delete(subscriber_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Subscriber not found")
     return deleted
@@ -103,7 +103,7 @@ async def export_campaigns_csv(
             ]
         
         # Get data from database using existing list method
-        paginated_response = await service.list(
+        paginated_response = service.list(
             filters=query_filter, 
             skip=skip, 
             limit=limit or 10000  # Default limit if none provided
@@ -170,7 +170,7 @@ async def export_campaigns_csv_stream(
             
             while True:
                 # Fetch batch using existing list method
-                paginated_response = await service.list(
+                paginated_response = service.list(
                     filters=query_filter,
                     skip=current_skip,
                     limit=min(batch_size, (limit - total_processed) if limit else batch_size)
@@ -246,7 +246,7 @@ async def export_active_campaigns_csv(
     }
     
     try:
-        paginated_response = await service.list(filters=query_filter)
+        paginated_response = service.list(filters=query_filter)
         
         if not paginated_response.items:
             raise HTTPException(status_code=404, detail="No active campaigns found")
@@ -290,7 +290,7 @@ async def export_by_campaign_type(
     query_filter = {f"campaigns.{campaign_type}": enabled}
     
     try:
-        paginated_response = await service.list(filters=query_filter)
+        paginated_response = service.list(filters=query_filter)
         
         if not paginated_response.items:
             status = "enabled" if enabled else "disabled"

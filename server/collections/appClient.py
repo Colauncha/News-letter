@@ -28,13 +28,19 @@ class AppClient:
         # Directly bind the collection
         self.collection = get_db()["appClient"]
 
-    async def get_by_id(self, app_client_id: str) -> Optional[AppClientRead]:
+    def get_by_id(self, app_client_id: str) -> Optional[AppClientRead]:
         if not app_client_id:
             return None
-        doc = await self.collection.find_one({"_id": app_client_id})
+
+        try:
+            oid = ObjectId(app_client_id)
+        except InvalidId:
+            return False
+
+        doc = self.collection.find_one({"_id": oid})
         return doc if doc else None
 
-    async def list(
+    def list(
         self,
         filters: dict[str, Any] = None,
         limit: int = 50,
@@ -42,10 +48,10 @@ class AppClient:
     ) -> PaginatedResponse[AppClientRead]:
         filters = filters or {}
 
-        total = await self.collection.count_documents(filters)
+        total = self.collection.count_documents(filters)
 
         cursor = self.collection.find(filters).skip(skip).limit(limit)
-        docs = await cursor.to_list(length=limit)
+        docs = cursor.to_list(length=limit)
         items = [AppClientRead(**doc) for doc in docs if doc]
         return PaginatedResponse[AppClientRead](
             total=total,
@@ -55,10 +61,10 @@ class AppClient:
             items=items,
         )
 
-    async def exists(self, attr: dict[str, Any]) -> bool:
-        return await self.collection.find_one(attr) is not None
+    def exists(self, attr: dict[str, Any]) -> bool:
+        return self.collection.find_one(attr) is not None
 
-    async def update(self, app_client_id: str, updates: AppClientUpdate) -> dict:
+    def update(self, app_client_id: str, updates: AppClientUpdate) -> dict:
         """Update an app client and return result details."""
         if not app_client_id:
             return {"success": False, "reason": "Missing ID"}
@@ -74,7 +80,7 @@ class AppClient:
             update_data["updated_at"] = datetime.now(timezone.utc)
 
         # Perform the update
-        result = await self.collection.update_one({"_id": oid}, {"$set": update_data})
+        result = self.collection.update_one({"_id": oid}, {"$set": update_data})
 
         if result.matched_count == 0:
             return {"success": False, "reason": "No document found"}
@@ -83,7 +89,7 @@ class AppClient:
         else:
             return {"success": True, "reason": "Updated successfully"}
 
-    async def delete(self, app_client_id: str) -> dict:
+    def delete(self, app_client_id: str) -> dict:
         if not app_client_id:
             return {"success": False, "reason": "Missing ID"}
 
@@ -92,16 +98,16 @@ class AppClient:
         except InvalidId:
             return {"success": False, "reason": "Invalid ID format"}
 
-        result = await self.collection.delete_one({"_id": oid})
+        result = self.collection.delete_one({"_id": oid})
 
         if result.deleted_count == 0:
             return {"success": False, "reason": "No document found"}
         return {"success": True, "reason": "Delete successfully"}
 
-    async def create(self, document: AppClientCreate) -> dict[str, str | int | datetime]:
+    def create(self, document: AppClientCreate) -> dict[str, str | int | datetime]:
         """Improved create method using master secret approach"""
         doc_dict = document.model_dump()
-        exists = await self.exists({"name": doc_dict["name"]})
+        exists = self.exists({"name": doc_dict["name"]})
         if exists:
             raise HTTPException(status_code=400, detail="App Client with this name already exists.")
         
@@ -120,7 +126,7 @@ class AppClient:
             "token_expires_days": 365
         })
         
-        result = await self.collection.insert_one(doc_dict)
+        result = self.collection.insert_one(doc_dict)
         
         # Create JWT secret by combining master secret with client salt
         jwt_secret = hashlib.sha256(f"{app_config.JWT_SECRET_KEY}:{client_salt}".encode()).hexdigest()
@@ -150,7 +156,7 @@ class AppClient:
             "message": "Store the access_token securely. Use it in Authorization header as 'Bearer <token>'"
         }
 
-    async def verify_jwt_token(self, token: str) -> dict:
+    def verify_jwt_token(self, token: str) -> dict:
         """Verify JWT token using master secret approach"""
         try:
             # First decode without verification to get the API key
@@ -161,7 +167,7 @@ class AppClient:
                 raise HTTPException(status_code=401, detail="Invalid token: missing API key")
             
             # Get client from database
-            client = await self.collection.find_one({"API_KEY": api_key, "is_active": True})
+            client = self.collection.find_one({"API_KEY": api_key, "is_active": True})
             if not client:
                 raise HTTPException(status_code=401, detail="Invalid API key or client inactive")
             

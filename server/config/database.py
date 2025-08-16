@@ -1,16 +1,13 @@
-import asyncio
-
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo import server_api
+from pymongo import server_api, MongoClient
 
 from server.config.app_config import app_config
 
-client: AsyncIOMotorClient = None
+client: MongoClient = None
     
-async def create_client():
+def create_client():
     global client
     try:
-        client = AsyncIOMotorClient(
+        client = MongoClient(
             app_config.DB.URL,
             server_api=server_api.ServerApi(
                 version="1",
@@ -23,13 +20,12 @@ async def create_client():
     except Exception as e:
         raise Exception(f"Failed to connect to MongoDB: {e}")
 
-def get_db () -> AsyncIOMotorDatabase:
+def get_db ():
     global client
     if client is None:
-        # client = AsyncIOMotorClient(app_config.DB.URL)
-        asyncio.run(create_client())
+        create_client()
     return client[app_config.DB.NAME]
 
-async def close_mongo_connection():
+def close_mongo_connection():
     print("Closing MongoDB connection...")
     client.close()

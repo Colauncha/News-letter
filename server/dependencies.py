@@ -15,7 +15,7 @@ def get_app_client_model():
         raise
 
 
-async def verify_bearer_token(
+def verify_bearer_token(
     authorization: Optional[str] = Header(None, description="Bearer token"),
     client_service=Depends(get_app_client_model)  # Your service injection
 ):
@@ -29,9 +29,9 @@ async def verify_bearer_token(
         raise HTTPException(status_code=401, detail="Invalid authorization header format")
     
     token = authorization.split(" ")[1]
-    return await client_service.verify_jwt_token(token)
+    return client_service.verify_jwt_token(token)
 
-async def get_subscriber_model(auth_data=Depends(verify_bearer_token)) -> Subscriber:
+def get_subscriber_model(auth_data=Depends(verify_bearer_token)) -> Subscriber:
     if not auth_data:
         raise HTTPException(status_code=401, detail="Unauthorized access")
     client = auth_data.get("client_data")

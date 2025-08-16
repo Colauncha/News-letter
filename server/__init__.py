@@ -7,18 +7,19 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config.app_config import app_config
-from .config.database import create_client, close_mongo_connection
+from .config.database import create_client
 from .routes.appClient import router as app_router
 from .routes.subscriber import router as sub_router
 
 
 def create_app():
     # Initialize the database client
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        await create_client()
-        yield
-        await close_mongo_connection()
+    # @asynccontextmanager
+    # async def lifespan(app: FastAPI):
+    #     await create_client()
+    #     yield
+    #     await close_mongo_connection()
+    create_client()
 
     app = FastAPI(
         title=app_config.app_name,
@@ -28,7 +29,7 @@ def create_app():
         redoc_url="/redoc",
         openapi_url="/openapi.json",
         description="API for News Letter and Tracking App",
-        lifespan=lifespan
+        # lifespan=lifespan
     )
 
     app.add_middleware(

@@ -22,9 +22,9 @@ async def create_subscriber(
     payload: AppClientCreate,
     app_client_model: AppClient = Depends(get_app_client_model)
 ):
-    if await app_client_model.exists({"email": payload.email}):
+    if app_client_model.exists({"email": payload.email}):
         raise HTTPException(status_code=400, detail="App already exists")
-    data = await app_client_model.create(payload)
+    data = app_client_model.create(payload)
     return data
 
 
@@ -33,7 +33,7 @@ async def get_app_client(
     app_client_id: str,
     app_client_model: AppClient = Depends(get_app_client_model)
 ):
-    app_client = await app_client_model.get_by_id(app_client_id)
+    app_client = app_client_model.get_by_id(app_client_id)
     if not app_client:
         raise HTTPException(status_code=404, detail="App Client not found")
     return app_client
@@ -45,7 +45,7 @@ async def list_app_clients(
     limit: int = 50,
     app_client_model: AppClient = Depends(get_app_client_model)
 ):
-    return await app_client_model.list(skip=skip, limit=limit)
+    return app_client_model.list(skip=skip, limit=limit)
 
 
 @router.put("/{app_client_id}", response_model=dict)
@@ -58,7 +58,7 @@ async def update_app_client(
     if app_client["client_data"]["id"] != app_client_id:
         raise HTTPException(status_code=403, detail="You can only update your own App Client")
 
-    result = await app_client_model.update(app_client_id, payload)
+    result = app_client_model.update(app_client_id, payload)
 
     if not result["success"]:
         raise HTTPException(status_code=404, detail=result["reason"])
@@ -75,7 +75,7 @@ async def delete_app_client(
     if app_client["client_data"]["id"] != app_client_id:
         raise HTTPException(status_code=403, detail="You can only delete your own App Client")
 
-    result = await app_client_model.delete(app_client_id)
+    result = app_client_model.delete(app_client_id)
 
     if not result["success"]:
         raise HTTPException(status_code=404, detail=result["reason"])
@@ -105,7 +105,7 @@ async def refresh_token(
     }
     
     # Get client salt from database
-    client = await app_client_model.collection.find_one({"API_KEY": api_key})
+    client = app_client_model.collection.find_one({"API_KEY": api_key})
     jwt_secret = hashlib.sha256(f"{app_config.JWT_SECRET_KEY}:{client['client_salt']}".encode()).hexdigest()
     
     new_token = jwt.encode(new_payload, jwt_secret, algorithm="HS256")
