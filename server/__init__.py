@@ -13,12 +13,6 @@ from .routes.subscriber import router as sub_router
 
 
 def create_app():
-    # Initialize the database client
-    # @asynccontextmanager
-    # async def lifespan(app: FastAPI):
-    #     await create_client()
-    #     yield
-    #     await close_mongo_connection()
     create_client()
 
     app = FastAPI(
@@ -39,6 +33,13 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def display_request_info(request: Request, call_next):
+        print(f"Request: {request.headers} {request.client}")
+        response = await call_next(request)
+        print(f"Response: {response.status_code}")
+        return response
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request, exc):
