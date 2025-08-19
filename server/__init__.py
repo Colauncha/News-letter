@@ -10,6 +10,7 @@ from .config.app_config import app_config
 from .config.database import create_client
 from .routes.appClient import router as app_router
 from .routes.subscriber import router as sub_router
+from .routes.trackingAndAnalytics import router as tracking_router
 
 
 def create_app():
@@ -70,6 +71,7 @@ def create_app():
     # TODO: Add other routes and include them in the app
     app.include_router(app_router)
     app.include_router(sub_router)
+    app.include_router(tracking_router)
 
     @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
     async def catch_all(full_path: str, request: Request):

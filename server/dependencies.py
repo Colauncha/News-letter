@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Header, status
 
 from server.collections.subscribers import Subscriber
+from server.collections.trackingAndAnalytics import TrackerAndAnalytics
 
 
 def get_app_client_model():
@@ -41,3 +42,15 @@ def get_subscriber_model(auth_data=Depends(verify_bearer_token)) -> Subscriber:
     if not collection_name:
         raise HTTPException(status_code=400, detail="Collection name not found in client data")
     return Subscriber(collection_name)
+
+def get_analytics_model(auth_data=Depends(verify_bearer_token)) -> TrackerAndAnalytics:
+    if not auth_data:
+        raise HTTPException(status_code=401, detail="Unauthorized access")
+    client = auth_data.get("client_data")
+    if not client:
+        raise HTTPException(status_code=401, detail="Invalid client data in token")
+    name = client.get("name")
+    collection_name = f'{name}_tracking_and_analytics'
+    if not collection_name:
+        raise HTTPException(status_code=400, detail="Collection name not found in client data")
+    return TrackerAndAnalytics(collection_name, name)
