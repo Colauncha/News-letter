@@ -21,7 +21,10 @@ def get_visitor_count(
     analytics: TrackerAndAnalytics = Depends(get_analytics_model)
 ):
     try:
-        return {"count": analytics.get_visitor_count()}
+        return {
+            "count": analytics.get_visitor_count(),
+            "non-unique-count": analytics.get_non_unique_visitor_count()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
