@@ -32,11 +32,30 @@ class TrackerAndAnalytics:
             self.collection.insert_one({"_id": key, "count": 1})
             return {"count": 1}
 
+    def increase_non_unique_visitor_count(self) -> dict[str, int]:
+        """Increase the visitor count by 1."""
+        key = f'{self.name}_{datetime.now().strftime("%Y-%m-%d")}'
+        exist = self.collection.find_one({"_id": key})
+        if exist:
+            self.collection.update_one({"_id": key}, {"$inc": {"non-unique-count": 1}})
+            return {"non-unique-count": exist["non-unique-count"] + 1}
+        else:
+            self.collection.insert_one({"_id": key, "non-unique-count": 1})
+            return {"non-unique-count": 1}
+
+
     def get_visitor_count(self) -> int:
         """Get the total visitor count."""
         key = f'{self.name}_{datetime.now().strftime("%Y-%m-%d")}'
         doc = self.collection.find_one({"_id": key})
         return doc["count"] if doc else 0
+
+    def get_non_unique_visitor_count(self) -> int:
+        """Get the total visitor count."""
+        key = f'{self.name}_{datetime.now().strftime("%Y-%m-%d")}'
+        doc = self.collection.find_one({"_id": key})
+        return doc["non-unique-count"] if doc else 0
+
 
     def get_unique_visitors(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[str]:
         """Get unique visitors within a date range."""

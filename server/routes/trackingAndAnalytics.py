@@ -46,3 +46,21 @@ def get_unique_visitor_count(
         return {"count": analytics.get_unique_visitor_count(start_date, end_date)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/nu/visitors")
+def increase_nu_visitor_count(
+    analytics: TrackerAndAnalytics = Depends(get_analytics_model)
+):
+    try:
+        return analytics.increase_non_unique_visitor_count()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/nu/visitors/count")
+def get_nu_visitor_count(
+    analytics: TrackerAndAnalytics = Depends(get_analytics_model)
+):
+    try:
+        return {"non-unique-count": analytics.get_non_unique_visitor_count()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
