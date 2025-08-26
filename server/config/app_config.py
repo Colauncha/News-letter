@@ -13,7 +13,7 @@ class DatabaseConfig(BaseSettings):
 
 class AppConfig(BaseSettings):
     app_name: str = "News Letter and Tracking App"
-    version: str = "1.0.0"
+    version: str = "1.2.1"
     ENV: str = "development"
     debug: bool = False if ENV == "development" else True
     DB: DatabaseConfig
