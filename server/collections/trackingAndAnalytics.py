@@ -49,6 +49,27 @@ class TrackerAndAnalytics:
         doc = self.collection.find_one({"_id": key})
         return doc["count"] if doc else 0
 
+    def get_visitor_count_range(self, start_date: datetime, end_date: datetime) -> dict[str, int]:
+        """Get the total visitor count within a date range."""
+        start_key = f'{self.name}_{start_date.strftime("%Y-%m-%d")}'
+        end_key = f'{self.name}_{end_date.strftime("%Y-%m-%d")}'
+        
+        cursor = self.collection.find({"_id": {"$gte": start_key, "$lte": end_key}})
+        unique = {}
+        non_unique = {}
+        for doc in cursor:
+            date = doc["_id"].split("_")[-1]
+            unique[date] = doc.get("count", 0)
+            non_unique[date] = doc.get("nonunique_count", 0)
+
+        return {
+            "unique": unique,
+            "non_unique": non_unique,
+            "app_name": self.name,
+            "total_unique_count": sum(unique.values()),
+            "total_nonunique_count": sum(non_unique.values()),
+        }
+
     def get_non_unique_visitor_count(self) -> int:
         """Get the total visitor count."""
         key = f'{self.name}_{datetime.now().strftime("%Y-%m-%d")}'

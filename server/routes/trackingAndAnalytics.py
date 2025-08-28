@@ -67,3 +67,25 @@ def get_nu_visitor_count(
         return {"nonunique_count": analytics.get_non_unique_visitor_count()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/visitors/count/range")
+def get_visitor_count_range(
+    start_date: datetime = Query(..., description="Start date in YYYY-MM-DD format"),
+    end_date: datetime = Query(..., description="End date in YYYY-MM-DD format"),
+    analytics: TrackerAndAnalytics = Depends(get_analytics_model)
+):
+    try:
+        # Ensure dates are timezone-aware
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+        
+        if start_date > end_date:
+            raise HTTPException(status_code=400, detail="start_date must be before or equal to end_date")
+        
+        return analytics.get_visitor_count_range(start_date, end_date)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
